@@ -1170,7 +1170,10 @@
       <textarea class="field-input" id="seo-description" maxlength="160" rows="3" placeholder="Shown under your link in Google search results and shares. Keep it under ~160 characters." style="resize:vertical; font-family:inherit;"></textarea>
       <span class="field-label" style="margin-top:14px; display:block;">Keywords</span>
       <input class="field-input" id="seo-keywords" type="text" placeholder="comma, separated, terms">
-      <button class="continue-btn" id="seo-save-btn" style="margin-top:16px;">Save SEO settings</button>
+      <div style="display:flex; gap:10px; margin-top:16px; flex-wrap:wrap;">
+        <button class="track-btn" id="seo-generate-btn" style="flex:1; min-width:160px;">Generate automatically</button>
+        <button class="continue-btn" id="seo-save-btn" style="flex:1; min-width:160px; margin-top:0;">Save SEO settings</button>
+      </div>
       <div class="lock-error" id="seo-error">Could not save — check your connection and try again.</div>
       <div class="field-hint" id="seo-saved" style="display:none; color:var(--accent); margin-top:10px;">Saved.</div>
     </div>
@@ -1485,6 +1488,36 @@
       document.getElementById('seo-keywords').value = data.keywords || '';
     }catch(e){ console.error('Could not load SEO settings for admin form', e); }
   }
+
+  // Builds title/description/keywords from what's actually true about the
+  // site right now (the real tiers and prices), rather than generic filler —
+  // an accurate description is also just better SEO than a vague one.
+  function buildAutoSeo(){
+    const counts = PRODUCTS.map(p => p.count);
+    const prices = PRODUCTS.map(p => p.price);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    const minCount = counts[0];
+    const maxCount = counts[counts.length - 1];
+
+    const title = `SURGE — Buy Instagram Followers in South Africa (${minCount}–${maxCount})`;
+    const description =
+      `Grow your Instagram following from ${minCount} to ${maxCount} followers. ` +
+      `${PRODUCTS.length} packages from R${minPrice}–R${maxPrice}, EFT bank transfer, and order tracking — no login required.`;
+    const keywordList = [
+      'buy instagram followers',
+      'instagram followers south africa',
+      'grow instagram following',
+      'instagram growth service',
+      ...PRODUCTS.map(p => `${p.count} instagram followers`)
+    ];
+
+    document.getElementById('seo-title').value = title.slice(0, 70);
+    document.getElementById('seo-description').value = description.slice(0, 160);
+    document.getElementById('seo-keywords').value = keywordList.join(', ');
+  }
+
+  document.getElementById('seo-generate-btn').addEventListener('click', buildAutoSeo);
 
   document.getElementById('seo-save-btn').addEventListener('click', async () => {
     const errEl = document.getElementById('seo-error');
