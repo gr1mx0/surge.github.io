@@ -3,7 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SURGE — Grow your following</title>
+<title>SURGE — Buy Instagram Followers in South Africa</title>
+<meta name="description" content="Grow your Instagram following with SURGE. Five package tiers, EFT payment via South African bank transfer, and order tracking — no login required.">
+<meta name="keywords" content="buy instagram followers, instagram followers south africa, grow instagram following, instagram growth service">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://gr1mx0.github.io/Surge/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="SURGE — Buy Instagram Followers in South Africa">
+<meta property="og:description" content="Five package tiers, EFT payment, and order tracking. Pick a tier and watch your following surge.">
+<meta property="og:url" content="https://gr1mx0.github.io/Surge/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="SURGE — Buy Instagram Followers in South Africa">
+<meta name="twitter:description" content="Five package tiers, EFT payment, and order tracking. Pick a tier and watch your following surge.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0a0d'/%3E%3Cpath d='M8 22 L8 16 M15 22 L15 11 M22 22 L22 6' stroke='%23e8759e' stroke-width='3.4' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -1145,6 +1156,24 @@
       </div>
     </div>
     <div id="admin-table-wrap"></div>
+
+    <div class="section-label" style="margin-top:40px;">SEO SETTINGS</div>
+    <div class="track-box">
+      <div style="font-weight:600; font-size:15px; margin-bottom:4px;">Page title, description &amp; keywords</div>
+      <div class="field-hint" style="margin-bottom:16px;">
+        These update what your site tells search engines and link previews it's about.
+        They do not affect how Google ranks you — that depends on backlinks, content, and time, not this form.
+      </div>
+      <span class="field-label">Page title</span>
+      <input class="field-input" id="seo-title" type="text" maxlength="70" placeholder="SURGE — Buy Instagram Followers in South Africa">
+      <span class="field-label" style="margin-top:14px; display:block;">Meta description</span>
+      <textarea class="field-input" id="seo-description" maxlength="160" rows="3" placeholder="Shown under your link in Google search results and shares. Keep it under ~160 characters." style="resize:vertical; font-family:inherit;"></textarea>
+      <span class="field-label" style="margin-top:14px; display:block;">Keywords</span>
+      <input class="field-input" id="seo-keywords" type="text" placeholder="comma, separated, terms">
+      <button class="continue-btn" id="seo-save-btn" style="margin-top:16px;">Save SEO settings</button>
+      <div class="lock-error" id="seo-error">Could not save — check your connection and try again.</div>
+      <div class="field-hint" id="seo-saved" style="display:none; color:var(--accent); margin-top:10px;">Saved.</div>
+    </div>
   </div>
 </div>
 
@@ -1169,6 +1198,28 @@
     if(!sb) throw new Error('Backend is not configured (SUPABASE_URL/SUPABASE_ANON_KEY missing or the Supabase library failed to load).');
     return sb;
   }
+
+  // Applies whatever's saved in site_settings over the static defaults already
+  // in the HTML. This only affects browsers that run JS (so: Google, real
+  // visitors) — it does NOT reach link-preview bots (WhatsApp, Facebook, etc.),
+  // which is exactly why static defaults exist in the <head> as a fallback.
+  async function applyLiveSeoSettings(){
+    if(!sb) return;
+    try{
+      const { data, error } = await sb.from('site_settings').select('*').eq('id', 1).maybeSingle();
+      if(error || !data) return;
+      if(data.title) document.title = data.title;
+      if(data.meta_description){
+        const el = document.querySelector('meta[name="description"]');
+        if(el) el.setAttribute('content', data.meta_description);
+      }
+      if(data.keywords){
+        const el = document.querySelector('meta[name="keywords"]');
+        if(el) el.setAttribute('content', data.keywords);
+      }
+    }catch(e){ console.error('Could not load SEO settings', e); }
+  }
+  applyLiveSeoSettings();
 
   const PRODUCTS = [
     { id: 1, count: "5,000",   label: "followers", price: 99,   badge: null },
@@ -1422,7 +1473,40 @@
     }
     loadAdminOrders(false);
     startAdminPolling();
+    loadSeoSettingsIntoForm();
   }
+
+  async function loadSeoSettingsIntoForm(){
+    try{
+      const { data, error } = await requireClient().from('site_settings').select('*').eq('id', 1).maybeSingle();
+      if(error || !data) return;
+      document.getElementById('seo-title').value = data.title || '';
+      document.getElementById('seo-description').value = data.meta_description || '';
+      document.getElementById('seo-keywords').value = data.keywords || '';
+    }catch(e){ console.error('Could not load SEO settings for admin form', e); }
+  }
+
+  document.getElementById('seo-save-btn').addEventListener('click', async () => {
+    const errEl = document.getElementById('seo-error');
+    const savedEl = document.getElementById('seo-saved');
+    errEl.classList.remove('show');
+    savedEl.style.display = 'none';
+    const title = document.getElementById('seo-title').value.trim();
+    const meta_description = document.getElementById('seo-description').value.trim();
+    const keywords = document.getElementById('seo-keywords').value.trim();
+    try{
+      const { error } = await requireClient().from('site_settings')
+        .update({ title, meta_description, keywords, updated_at: new Date().toISOString() })
+        .eq('id', 1);
+      if(error) throw error;
+      savedEl.style.display = 'block';
+      setTimeout(() => savedEl.style.display = 'none', 3000);
+    }catch(e){
+      console.error('Could not save SEO settings', e);
+      errEl.textContent = 'Could not save — check your connection and try again.';
+      errEl.classList.add('show');
+    }
+  });
 
   async function tryUnlock(){
     const errEl = document.getElementById('lock-error');
